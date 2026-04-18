@@ -1,4 +1,9 @@
 import { spawn } from 'child_process';
+import { createReadStream } from 'fs';
+import { mkdtemp, readdir, rm, stat } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { pipeline } from 'stream/promises';
 import DownloadHistory from '../models/DownloadHistory.js';
 import { createHttpError } from '../utils/createHttpError.js';
 import { sanitizeFilename } from '../utils/sanitizeFilename.js';
@@ -52,7 +57,7 @@ export async function getVideoInfo(url) {
   const json = await runYtDlpJson(['--dump-json', '--no-playlist', url]);
   const formats = getFormatOptions().map((option) => ({
     ...option,
-    size: estimateFormatSize(json.formats, option.key)
+    size: estimateFormatSize(json.formats, option.key, json.duration)
   }));
 
   return {
@@ -74,13 +79,15 @@ export async function streamDownload({ url, formatKey, title, res }) {
 
   const safeTitle = sanitizeFilename(title || 'youtube-download');
   const filename = `${safeTitle}.${option.extension}`;
+  const tempDir = await mkdtemp(join(tmpdir(), 'youtube-download-'));
+  const outputTemplate = join(tempDir, 'download.%(ext)s');
   const args = [
     '--no-playlist',
     '--newline',
     '-f',
     option.selector,
     '-o',
-    '-'
+    outputTemplate
   ];
 
   if (option.audioOnly) {
@@ -92,63 +99,113 @@ export async function streamDownload({ url, formatKey, title, res }) {
 
   args.push(url);
 
-  res.setHeader('Content-Type', option.contentType);
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  res.setHeader('X-Download-Title', encodeURIComponent(safeTitle));
-
-  const child = spawn(YTDLP_PATH, args, {
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
-
-  let bytesSent = 0;
-  let stderr = '';
-
-  child.stdout.on('data', (chunk) => {
-    bytesSent += chunk.length;
-  });
-
-  child.stderr.on('data', (chunk) => {
-    stderr += chunk.toString();
-    const progress = parseProgressLine(chunk.toString());
-    if (progress) {
-      console.log(`yt-dlp ${formatKey}: ${progress.percent ?? '?'} ${progress.speed ?? ''}`);
-    }
-  });
-
-  child.on('error', (error) => {
-    if (!res.headersSent) {
-      res.status(500).json({ message: 'yt-dlp failed to start. Confirm it is installed on PATH.' });
-    } else {
-      res.destroy(error);
-    }
-  });
-
-  child.stdout.pipe(res);
-
-  child.on('close', async (code) => {
-    if (code === 0) {
-      await DownloadHistory.create({
-        title: safeTitle,
-        format: option.label,
-        size: bytesSent,
-        sourceUrl: url
-      });
-      return;
-    }
-
-    console.error(stderr);
-    if (!res.headersSent) {
-      res.status(500).json({ message: 'yt-dlp could not download this media.' });
-    } else {
-      res.end();
-    }
-  });
-
-  res.on('close', () => {
-    if (!child.killed) {
+  let child;
+  let cleanedUp = false;
+  const abortDownload = () => {
+    if (child && !child.killed) {
       child.kill('SIGTERM');
     }
+  };
+
+  try {
+    child = spawn(YTDLP_PATH, args, {
+      stdio: ['ignore', 'ignore', 'pipe']
+    });
+    res.once('close', abortDownload);
+
+    await waitForYtDlp(child, formatKey);
+    res.off('close', abortDownload);
+
+    const outputPath = await findDownloadedFile(tempDir, option.extension);
+    const { size } = await stat(outputPath);
+
+    res.setHeader('Content-Type', option.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', size);
+    res.setHeader('X-Download-Title', encodeURIComponent(safeTitle));
+
+    await pipeFileToResponse(outputPath, res);
+    await saveDownloadHistory({
+      title: safeTitle,
+      format: option.label,
+      size,
+      sourceUrl: url
+    });
+    await cleanupTempDir(tempDir);
+    cleanedUp = true;
+  } catch (error) {
+    res.off('close', abortDownload);
+
+    if (child && !child.killed) {
+      child.kill('SIGTERM');
+    }
+
+    if (!res.headersSent) {
+      throw error;
+    }
+
+    res.destroy(error);
+  } finally {
+    if (!cleanedUp) {
+      await cleanupTempDir(tempDir);
+    }
+  }
+}
+
+function waitForYtDlp(child, formatKey) {
+  return new Promise((resolve, reject) => {
+    let stderr = '';
+
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+      const progress = parseProgressLine(chunk.toString());
+      if (progress) {
+        console.log(`yt-dlp ${formatKey}: ${progress.percent ?? '?'} ${progress.speed ?? ''}`);
+      }
+    });
+
+    child.on('error', () => {
+      reject(createHttpError(500, 'yt-dlp failed to start. Confirm it is installed on PATH.'));
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        console.error(stderr);
+        reject(createHttpError(500, readableYtDlpError(stderr) || 'yt-dlp could not download this media.'));
+        return;
+      }
+
+      resolve(stderr);
+    });
   });
+}
+
+async function findDownloadedFile(tempDir, extension) {
+  const files = await readdir(tempDir);
+  const preferred = files.find((file) => file.toLowerCase().endsWith(`.${extension}`));
+  const file = preferred || files[0];
+
+  if (!file) {
+    throw createHttpError(500, 'yt-dlp did not create a downloadable file.');
+  }
+
+  return join(tempDir, file);
+}
+
+function pipeFileToResponse(filePath, res) {
+  return pipeline(createReadStream(filePath), res);
+}
+
+async function saveDownloadHistory(entry) {
+  try {
+    await DownloadHistory.create(entry);
+  } catch (error) {
+    console.error('Failed to save download history', error);
+  }
+}
+
+async function cleanupTempDir(tempDir) {
+  await rm(tempDir, { recursive: true, force: true });
 }
 
 function runYtDlpJson(args) {
@@ -187,18 +244,62 @@ function runYtDlpJson(args) {
   });
 }
 
-function estimateFormatSize(formats = [], key) {
+function estimateFormatSize(formats = [], key, duration) {
   if (key === 'audio') {
-    const audio = formats
-      .filter((format) => format.acodec !== 'none')
-      .sort((a, b) => (b.filesize || b.filesize_approx || 0) - (a.filesize || a.filesize_approx || 0))[0];
-    return audio?.filesize || audio?.filesize_approx || null;
+    return getFormatSizeBytes(findBestAudioFormat(formats), duration);
   }
 
   const height = Number.parseInt(key, 10);
-  const candidates = formats.filter((format) => format.height && format.height <= height);
-  const best = candidates.sort((a, b) => (b.height || 0) - (a.height || 0))[0];
-  return best?.filesize || best?.filesize_approx || null;
+  const video = findBestVideoFormat(formats, height);
+  const audio = video?.acodec === 'none' ? findBestAudioFormat(formats) : null;
+  const videoSize = getFormatSizeBytes(video, duration);
+  const audioSize = getFormatSizeBytes(audio, duration);
+
+  return videoSize || audioSize ? (videoSize || 0) + (audioSize || 0) : null;
+}
+
+function findBestAudioFormat(formats = []) {
+  return formats
+    .filter((format) => format.acodec !== 'none' && format.vcodec === 'none')
+    .sort(compareFormatQuality)[0]
+    || formats
+      .filter((format) => format.acodec !== 'none')
+      .sort(compareFormatQuality)[0];
+}
+
+function findBestVideoFormat(formats = [], height) {
+  return formats
+    .filter((format) => format.height && format.height <= height)
+    .sort(compareFormatQuality)[0];
+}
+
+function compareFormatQuality(a, b) {
+  return (b.height || 0) - (a.height || 0)
+    || getFormatBitrate(b) - getFormatBitrate(a)
+    || getKnownFormatSize(b) - getKnownFormatSize(a);
+}
+
+function getKnownFormatSize(format) {
+  return format?.filesize || format?.filesize_approx || 0;
+}
+
+function getFormatBitrate(format) {
+  return format?.tbr || format?.vbr || format?.abr || 0;
+}
+
+function getFormatSizeBytes(format, duration) {
+  const knownSize = getKnownFormatSize(format);
+
+  if (knownSize) {
+    return knownSize;
+  }
+
+  const bitrateKbps = getFormatBitrate(format);
+  if (!bitrateKbps || !duration) {
+    return null;
+  }
+
+  return Math.round((bitrateKbps * 1000 * duration) / 8);
 }
 
 function parseProgressLine(line) {
