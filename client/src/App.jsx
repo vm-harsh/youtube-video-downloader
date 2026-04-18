@@ -16,7 +16,6 @@ gsap.registerPlugin(ScrollToPlugin);
 
 export default function App() {
   const [history, setHistory] = useState([]);
-  const [darkMode, setDarkMode] = useState(true);
   const shellRef = useRef(null);
   const heroRef = useRef(null);
   const featureRef = useRef(null);
@@ -116,7 +115,7 @@ export default function App() {
   }
 
   return (
-    <main className={darkMode ? 'dark' : ''}>
+    <main className="dark">
       <div className="relative min-h-screen overflow-hidden bg-[#f7f7f7] text-zinc-950 transition-colors duration-500 dark:bg-[#0f0f0f] dark:text-white">
         <BackgroundScene />
         <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_16%,rgba(255,0,0,0.24),transparent_32%),radial-gradient(circle_at_85%_32%,rgba(0,204,255,0.12),transparent_26%),linear-gradient(180deg,rgba(15,15,15,0)_0%,rgba(15,15,15,0.22)_100%)]" />
@@ -124,7 +123,7 @@ export default function App() {
         <div ref={shellRef} className="app-shell relative z-10 min-h-screen opacity-0">
           <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
             <div className="nav-reveal">
-              <Navbar darkMode={darkMode} onToggleTheme={() => setDarkMode((value) => !value)} />
+              <Navbar />
             </div>
 
             <section ref={heroRef} className="grid flex-1 items-center gap-8 py-10 lg:grid-cols-[1.04fr_0.96fr] lg:py-14">
