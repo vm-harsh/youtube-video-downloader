@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import { AudioLines, Bolt, ShieldCheck, Sparkles } from 'lucide-react';
 import Navbar from './components/Navbar.jsx';
 import HeroInput from './components/HeroInput.jsx';
@@ -11,12 +12,15 @@ import BackgroundScene from './three/BackgroundScene.jsx';
 import { useDownloader } from './hooks/useDownloader.js';
 import { fetchHistory } from './services/api.js';
 
+gsap.registerPlugin(ScrollToPlugin);
+
 export default function App() {
   const [history, setHistory] = useState([]);
   const [darkMode, setDarkMode] = useState(true);
   const shellRef = useRef(null);
   const heroRef = useRef(null);
   const featureRef = useRef(null);
+  const fetchedVideoRef = useRef(null);
   const {
     video,
     selectedFormat,
@@ -79,6 +83,28 @@ export default function App() {
 
     return () => context.revert();
   }, []);
+
+  useEffect(() => {
+    if (!video || !fetchedVideoRef.current) {
+      return;
+    }
+
+    const context = gsap.context(() => {
+      gsap.to(window, {
+        scrollTo: { y: fetchedVideoRef.current, offsetY: 24 },
+        duration: 1,
+        ease: 'power3.inOut'
+      });
+
+      gsap.fromTo(
+        '.fetched-video-section > *',
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.55, stagger: 0.08, ease: 'power3.out', delay: 0.18 }
+      );
+    }, fetchedVideoRef);
+
+    return () => context.revert();
+  }, [video]);
 
   async function refreshHistory() {
     try {
@@ -192,7 +218,7 @@ export default function App() {
 
             <HistoryList items={history} onRefresh={refreshHistory} />
 
-            <div className="space-y-5">
+            <div ref={fetchedVideoRef} className="fetched-video-section scroll-mt-6 space-y-5">
               {error ? (
                 <div className="rounded-3xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-sm text-red-700 shadow-glow backdrop-blur-xl dark:text-red-100">
                   {error}
