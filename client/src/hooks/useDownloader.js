@@ -55,7 +55,7 @@ export function useDownloader(onComplete) {
       onComplete?.();
     } catch (requestError) {
       setStatus('failed');
-      setError(await getRequestErrorMessage(requestError, 'Download failed. Try another format or confirm yt-dlp is installed.'));
+      setError(await getRequestErrorMessage(requestError, 'This video cannot be downloaded due to YouTube’s content restrictions.'));
     }
   }
 

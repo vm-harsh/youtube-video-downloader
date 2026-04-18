@@ -219,7 +219,7 @@ export default function App() {
             <HistoryList items={history} onRefresh={refreshHistory} />
 
             <div ref={fetchedVideoRef} className="fetched-video-section scroll-mt-6 space-y-5">
-              {error ? (
+              {!video && error ? (
                 <div className="rounded-3xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-sm text-red-700 shadow-glow backdrop-blur-xl dark:text-red-100">
                   {error}
                 </div>
@@ -238,6 +238,11 @@ export default function App() {
                     disabled={!selectedFormat || status === 'downloading'}
                     onDownload={downloadSelected}
                   />
+                  {error ? (
+                    <div className="rounded-3xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-sm text-red-700 shadow-glow backdrop-blur-xl dark:text-red-100">
+                      {error}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
