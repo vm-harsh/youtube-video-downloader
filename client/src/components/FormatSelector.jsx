@@ -26,11 +26,11 @@ export default function FormatSelector({ formats, selectedFormat, onSelect }) {
             onClick={() => onSelect(format.key)}
             className={`format-button rounded-[22px] border p-4 text-left ${
               selected
-                ? 'border-cyan-300 bg-cyan-300/18 shadow-glow'
-                : 'border-white/14 bg-white/8 hover:border-teal-200/70'
+                ? 'border-red-400 bg-red-500/20 shadow-glow'
+                : 'border-white/14 bg-white/8 hover:border-red-300/70'
             }`}
           >
-            <Icon className="mb-4 text-cyan-200" size={20} />
+            <Icon className="mb-4 text-red-200" size={20} />
             <span className="block text-base font-semibold">{format.label}</span>
             <span className="mt-1 block text-xs text-slate-300">{formatBytes(format.size)}</span>
           </button>

@@ -41,13 +41,14 @@ export default function App() {
 
   return (
     <main className={darkMode ? 'dark' : ''}>
-      <div className="relative min-h-screen overflow-hidden bg-slate-100 text-slate-950 transition-colors duration-500 dark:bg-[#06080f] dark:text-white">
+      <div className="relative min-h-screen overflow-hidden bg-zinc-100 text-zinc-950 transition-colors duration-500 dark:bg-[#0f0f0f] dark:text-white">
         <BackgroundScene />
-        <div className="app-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
+        <div className="app-shell relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-5 sm:px-6 lg:px-8">
           <Navbar darkMode={darkMode} onToggleTheme={() => setDarkMode((value) => !value)} />
-          <section className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-5">
+          <section className="flex flex-1 items-center py-8">
+            <div className="w-full space-y-5">
               <HeroInput onSubmit={lookupVideo} loading={loading} />
+              <HistoryList items={history} onRefresh={refreshHistory} />
               {error ? (
                 <div className="rounded-3xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-sm text-red-100 shadow-glow backdrop-blur-xl">
                   {error}
@@ -70,7 +71,6 @@ export default function App() {
                 </div>
               ) : null}
             </div>
-            <HistoryList items={history} onRefresh={refreshHistory} />
           </section>
         </div>
       </div>

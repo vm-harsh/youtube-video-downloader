@@ -18,23 +18,18 @@ export default function BackgroundScene() {
     const particles = createParticles();
     scene.add(particles);
 
-    const sphere = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(1.6, 8),
-      new THREE.MeshStandardMaterial({
-        color: 0x22d3ee,
-        roughness: 0.28,
-        metalness: 0.45,
-        transparent: true,
-        opacity: 0.34
-      })
-    );
-    sphere.position.set(2.7, 0.5, -1);
-    scene.add(sphere);
+    const playButton = createPlayButton();
+    playButton.position.set(7, 3.35, -1.15);
+    playButton.rotation.set(-0.1, -0.35, 0.08);
+    scene.add(playButton);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    const light = new THREE.PointLight(0x5eead4, 22, 18);
+    const light = new THREE.PointLight(0xff2b2b, 28, 20);
     light.position.set(-3, 4, 6);
     scene.add(light);
+    const rimLight = new THREE.PointLight(0xffffff, 10, 12);
+    rimLight.position.set(4, -2, 4);
+    scene.add(rimLight);
 
     let frameId;
     const clock = new THREE.Clock();
@@ -43,8 +38,9 @@ export default function BackgroundScene() {
       const elapsed = clock.getElapsedTime();
       particles.rotation.y = elapsed * 0.035;
       particles.rotation.x = Math.sin(elapsed * 0.2) * 0.08;
-      sphere.rotation.x = elapsed * 0.18;
-      sphere.rotation.y = elapsed * 0.26;
+      playButton.rotation.x = Math.sin(elapsed * 0.45) * 0.12 - 0.1;
+      playButton.rotation.y = Math.sin(elapsed * 0.32) * 0.24 - 0.35;
+      playButton.rotation.z = Math.sin(elapsed * 0.25) * 0.08;
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     }
@@ -63,8 +59,14 @@ export default function BackgroundScene() {
       window.removeEventListener('resize', handleResize);
       particles.geometry.dispose();
       particles.material.dispose();
-      sphere.geometry.dispose();
-      sphere.material.dispose();
+      playButton.traverse((child) => {
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          child.material.dispose();
+        }
+      });
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
@@ -88,11 +90,80 @@ function createParticles() {
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
   const material = new THREE.PointsMaterial({
-    color: 0x67e8f9,
+    color: 0xff5555,
     size: 0.026,
     transparent: true,
-    opacity: 0.72
+    opacity: 0.66
   });
 
   return new THREE.Points(geometry, material);
+}
+
+function createPlayButton() {
+  const group = new THREE.Group();
+
+  const bodyShape = createRoundedRectShape(4, 2.75, 0.62);
+  const body = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(bodyShape, {
+      depth: 0.34,
+      bevelEnabled: true,
+      bevelSegments: 12,
+      bevelSize: 0.12,
+      bevelThickness: 0.08
+    }),
+    new THREE.MeshStandardMaterial({
+      color: 0xff0000,
+      emissive: 0x4d0000,
+      roughness: 0.24,
+      metalness: 0.18,
+      transparent: true,
+      opacity: 0.82
+    })
+  );
+  body.position.set(-2, -1.375, -0.17);
+  group.add(body);
+
+  const playShape = new THREE.Shape();
+  playShape.moveTo(-0.44, -0.64);
+  playShape.lineTo(-0.44, 0.64);
+  playShape.lineTo(0.72, 0);
+  playShape.lineTo(-0.44, -0.64);
+
+  const play = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(playShape, {
+      depth: 0.16,
+      bevelEnabled: true,
+      bevelSegments: 4,
+      bevelSize: 0.018,
+      bevelThickness: 0.018
+    }),
+    new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.32,
+      metalness: 0.08
+    })
+  );
+  play.position.z = 0.12;
+  group.add(play);
+
+  group.scale.setScalar(0.82);
+  return group;
+}
+
+function createRoundedRectShape(width, height, radius) {
+  const x = 0;
+  const y = 0;
+  const shape = new THREE.Shape();
+
+  shape.moveTo(x, y + radius);
+  shape.quadraticCurveTo(x, y, x + radius, y);
+  shape.lineTo(x + width - radius, y);
+  shape.quadraticCurveTo(x + width, y, x + width, y + radius);
+  shape.lineTo(x + width, y + height - radius);
+  shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  shape.lineTo(x + radius, y + height);
+  shape.quadraticCurveTo(x, y + height, x, y + height - radius);
+  shape.lineTo(x, y + radius);
+
+  return shape;
 }

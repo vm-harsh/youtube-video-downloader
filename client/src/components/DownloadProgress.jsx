@@ -34,14 +34,14 @@ export default function DownloadProgress({ progress, status, disabled, onDownloa
           type="button"
           disabled={disabled}
           onClick={onDownload}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {status === 'downloading' ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
           Download
         </button>
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-white/10">
-        <div ref={barRef} className="h-full w-0 rounded-full bg-gradient-to-r from-cyan-300 to-teal-300" />
+        <div ref={barRef} className="h-full w-0 rounded-full bg-gradient-to-r from-red-600 to-red-300" />
       </div>
     </section>
   );

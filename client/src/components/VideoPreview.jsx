@@ -27,7 +27,7 @@ export default function VideoPreview({ video }) {
           <button
             type="button"
             onClick={copyThumbnail}
-            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 transition hover:bg-cyan-300/20"
+            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 transition hover:bg-red-500/25"
           >
             <Copy size={16} />
             Thumbnail URL

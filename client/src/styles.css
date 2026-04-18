@@ -18,7 +18,7 @@ body {
 
 .glass {
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.38));
+  background: linear-gradient(135deg, rgba(24, 24, 27, 0.82), rgba(127, 29, 29, 0.26));
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(22px);
 }
@@ -35,5 +35,5 @@ body {
 }
 
 .format-button:hover {
-  box-shadow: 0 0 28px rgba(45, 212, 191, 0.25);
+  box-shadow: 0 0 28px rgba(255, 0, 0, 0.22);
 }
