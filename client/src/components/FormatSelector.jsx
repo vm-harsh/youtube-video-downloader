@@ -27,12 +27,12 @@ export default function FormatSelector({ formats, selectedFormat, onSelect }) {
             className={`format-button rounded-[22px] border p-4 text-left ${
               selected
                 ? 'border-red-400 bg-red-500/20 shadow-glow'
-                : 'border-white/14 bg-white/8 hover:border-red-300/70'
+                : 'border-zinc-200 bg-white/[0.62] hover:border-red-300/70 dark:border-white/[0.14] dark:bg-white/[0.08]'
             }`}
           >
-            <Icon className="mb-4 text-red-200" size={20} />
+            <Icon className="mb-4 text-red-600 dark:text-red-200" size={20} />
             <span className="block text-base font-semibold">{format.label}</span>
-            <span className="mt-1 block text-xs text-slate-300">{formatBytes(format.size)}</span>
+            <span className="mt-1 block text-xs text-zinc-600 dark:text-slate-300">{formatBytes(format.size)}</span>
           </button>
         );
       })}

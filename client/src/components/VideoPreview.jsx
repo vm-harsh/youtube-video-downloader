@@ -19,15 +19,15 @@ export default function VideoPreview({ video }) {
       <img src={video.thumbnail} alt={video.title} className="aspect-video w-full object-cover" />
       <div className="space-y-4 p-5">
         <h2 className="line-clamp-2 text-xl font-semibold leading-snug">{video.title}</h2>
-        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-600 dark:text-slate-300">
+          <span className="inline-flex items-center gap-2 rounded-full bg-zinc-950/[0.06] px-3 py-1 dark:bg-white/10">
             <Clock size={16} />
             {formatDuration(video.duration)}
           </span>
           <button
             type="button"
             onClick={copyThumbnail}
-            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 transition hover:bg-red-500/25"
+            className="inline-flex items-center gap-2 rounded-full bg-zinc-950/[0.06] px-3 py-1 transition hover:bg-red-500/25 dark:bg-white/10"
           >
             <Copy size={16} />
             Thumbnail URL

@@ -32,14 +32,14 @@ export default function HeroInput({ onSubmit, loading }) {
       className="glass space-y-5 rounded-[28px] p-5 sm:p-7"
     >
       <div className="space-y-3">
-        <p className="text-sm font-medium text-red-200">Paste or drop a YouTube URL</p>
-        <div className="flex items-center gap-3 rounded-2xl border border-white/12 bg-black/20 px-4 py-3">
-          <Link2 className="shrink-0 text-red-200" size={20} />
+        <p className="text-sm font-semibold text-red-600 dark:text-red-200">Paste or drop a YouTube URL</p>
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-950/[0.04] px-4 py-3 dark:border-white/[0.12] dark:bg-black/20">
+          <Link2 className="shrink-0 text-red-500 dark:text-red-200" size={20} />
           <input
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             placeholder="https://www.youtube.com/watch?v=..."
-            className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-slate-400"
+            className="min-w-0 flex-1 bg-transparent text-base text-zinc-950 outline-none placeholder:text-zinc-500 dark:text-white dark:placeholder:text-slate-400"
           />
         </div>
       </div>

@@ -20,7 +20,7 @@ export default function DownloadProgress({ progress, status, disabled, onDownloa
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-semibold">Download</p>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-zinc-600 dark:text-slate-300">
             {status === 'downloading'
               ? `Received ${formatBytes(progress.loaded)}`
               : status === 'completed'
@@ -40,7 +40,7 @@ export default function DownloadProgress({ progress, status, disabled, onDownloa
           Download
         </button>
       </div>
-      <div className="h-3 overflow-hidden rounded-full bg-white/10">
+      <div className="h-3 overflow-hidden rounded-full bg-zinc-950/[0.08] dark:bg-white/10">
         <div ref={barRef} className="h-full w-0 rounded-full bg-gradient-to-r from-red-600 to-red-300" />
       </div>
     </section>

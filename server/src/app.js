@@ -14,10 +14,7 @@ const port = process.env.PORT || 5000;
 app.use(helmet({
   crossOriginResourcePolicy: false
 }));
-app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
-  exposedHeaders: ['Content-Disposition', 'X-Download-Title']
-}));
+app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
 
